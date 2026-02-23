@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "organization": "Community",
+  "author": "alexismunoz1",
+  "date": "February 2026",
+  "abstract": "Practical guide to reduce token consumption, lower AI costs, and improve Claude Code performance through file organization, context management, and strategic model selection. Backed by real experiment data comparing monolithic vs modular architectures.",
+  "keywords": [
+    "token-optimization",
+    "claude-code",
+    "ai-efficiency",
+    "code-organization",
+    "context-management",
+    "cost-reduction"
+  ],
+  "references": [
+    {
+      "path": "references/file-organization-guide.md",
+      "description": "Detailed guide on file organization, naming conventions, and project structure for AI-efficient codebases"
+    },
+    {
+      "path": "references/context-management-guide.md",
+      "description": "Guide on lazy loading, subagents, MCP management, and model selection strategies"
+    },
+    {
+      "path": "references/metrics-report.md",
+      "description": "Complete experiment data comparing monolithic vs modular code architecture impact on token consumption"
+    }
+  ]
+}
