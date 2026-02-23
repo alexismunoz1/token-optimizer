@@ -41,6 +41,26 @@ The skill triggers when you mention things like:
 - "organize codebase for AI"
 - "context limit" / "token budget"
 
+## Contributing
+
+This is a community skill — contributions are welcome! Here's how:
+
+1. **Fork** the repo and clone it locally
+2. **Edit** the relevant file:
+   - `SKILL.md` — main guide (keep under 500 lines)
+   - `references/` — detailed guides (keep each under 200 lines)
+3. **Follow** these guidelines:
+   - Content in English (skills.sh standard)
+   - Each section should end with actionable items
+   - Back claims with data when possible
+4. **Submit a PR** with a clear description of what you're adding or improving
+
+Ideas for contributions:
+- New optimization techniques with real metrics
+- Guides for specific frameworks or languages
+- Translations (as separate files in `references/`)
+- Additional experiment data at different scales
+
 ## License
 
 MIT
