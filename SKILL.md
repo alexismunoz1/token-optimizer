@@ -12,7 +12,7 @@ compatibility: Claude Code
 license: MIT
 metadata:
   author: alexismunoz1
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # Token Optimizer
@@ -99,13 +99,14 @@ Default to Sonnet. Escalate to Opus only for genuinely complex problems. Use Hai
 
 Apply these in order of impact:
 
-1. **Split large files** (>150 lines) into focused modules → saves 18%+ tokens
-2. **Optimize your CLAUDE.md** → can reduce consumption 50-70%
-3. **Use `/clear` between tasks** → eliminates irrelevant context
-4. **Use `/compact` in long conversations** → compresses history
-5. **Use the right model** → Haiku costs 18x less than Opus for simple tasks
-6. **Limit active MCPs** to ≤10 → fewer tools = less overhead per call
-7. **Use subagents for verbose tasks** → output stays in subagent context
+1. **Run `/context` first** → establishes your baseline before any changes
+2. **Split large files** (>150 lines) into focused modules → saves 18%+ tokens
+3. **Optimize your CLAUDE.md** → can reduce consumption 50-70%
+4. **Use `/clear` between tasks** → eliminates irrelevant context
+5. **Use `/compact` in long conversations** → compresses history
+6. **Use subagents for verbose tasks** → test output, build logs, and search results stay in subagent context instead of polluting your main conversation
+7. **Use the right model** → default to Sonnet for daily work, Haiku for simple tasks (18x cheaper than Opus), Opus only for genuinely complex architecture decisions
+8. **Limit active MCPs** to ≤10 → each unused MCP still costs tokens every turn because its tool descriptions are sent in every request
 
 ## Expected Savings
 
@@ -121,20 +122,23 @@ Results from our controlled experiment with an 814-line TypeScript e-commerce ap
 
 **Key insight:** Focused tasks (bug fixes, specific changes — ~80% of daily work) benefit enormously from modular code. Cross-cutting tasks show minimal difference at small scale (+1-5%) but modular wins decisively at 5,000+ lines.
 
+**Note on scale:** These results are from a controlled experiment with an 814-line codebase. At larger scales (5,000+ lines), the savings from modular architecture are even more significant because monolithic files start hitting context window limits while modular files maintain constant size (35-146 lines each).
+
 > For the complete experiment methodology and raw data, see `references/metrics-report.md`
 
 ## Diagnostic Workflow
 
 When activated, follow this process:
 
-1. **Assess**: Ask the user to run `/context` to see current token usage
+0. **Measure first**: Always start by asking the user to run `/context`. Without a baseline number, you can't prove any optimization worked. This step is not optional.
+1. **Read the user's code**: Before recommending anything, look at their actual files and project structure. Scan for files >150 lines, check their CLAUDE.md size, and count active MCPs. Recommendations grounded in their real codebase are far more useful than generic advice.
 2. **Identify**: Determine the biggest source of waste (large files, bloated CLAUDE.md, accumulated context, too many MCPs)
 3. **Recommend**: Suggest the highest-impact optimization from the Quick Wins Checklist
 4. **Verify**: After changes, have the user re-run `/context` to measure improvement
 
 **Important guidelines:**
 - Always diagnose first — don't dump all optimizations
-- Measure before and after — every optimization should be verified with metrics
+- Measure before and after — every optimization should be verified with `/context`
 - Focus on the user's specific problem — identify the most impactful change first
 - Be transparent about trade-offs — modular files save 18%+ on focused tasks but show minimal difference on cross-cutting tasks at small scale
 
