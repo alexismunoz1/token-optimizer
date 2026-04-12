@@ -13,6 +13,7 @@ Token waste primarily comes from accumulated irrelevant context, not individual 
 | `/clear` | Switching tasks, after major corrections | Resets context completely |
 | `/compact` | Long session (>50 exchanges) | Compresses history, keeps essentials |
 | `/context` | Diagnosing costs, before/after optimization | Shows token consumption breakdown |
+| `/cost` | Anytime you want to see current spend | Shows current session cost; configure the statusline for continuous display |
 
 ### When to Clear
 

@@ -1,23 +1,31 @@
 ---
 name: token-optimizer
 description: >
-  Practical guide to reduce token consumption, lower AI costs, and improve
-  Claude Code performance through file organization, context management,
-  and strategic model selection. Backed by real experiment data.
+  Practical guide to reduce token consumption and lower AI costs for both
+  Claude Code users and developers calling the Anthropic API directly.
+  Covers file organization, context management, strategic model selection,
+  prompt caching, Batch API, effort tuning, and prompt architecture.
+  Backed by real experiment data.
   Use when user mentions "optimize tokens", "reduce costs", "Claude is slow",
   "too many tokens", "token budget", "context window full", "organize codebase
-  for AI", or "reduce token consumption". Do NOT use for general coding questions,
-  debugging, or performance optimization unrelated to AI token usage.
+  for AI", "reduce token consumption", "prompt caching", "cache_control",
+  "batch API", "cache broken", "API costs", or "thinking budget".
+  Do NOT use for general coding questions, debugging, or performance
+  optimization unrelated to AI token usage.
 compatibility: Claude Code
 license: MIT
 metadata:
   author: alexismunoz1
-  version: 1.3.0
+  version: 1.4.0
 ---
 
 # Token Optimizer
 
-A comprehensive toolkit to reduce token consumption, lower AI costs, and improve Claude Code performance. Every recommendation is backed by real experiment data from a controlled comparison of monolithic vs modular code architectures.
+A comprehensive toolkit to reduce token consumption and lower AI costs — for both **Claude Code users** (file organization, CLAUDE.md, context hygiene) and **API developers** (prompt caching, Batch API, effort tuning, prompt architecture). Recommendations are backed by real experiment data and current Anthropic pricing.
+
+**Which sections apply to you:**
+- Using Claude Code? → Sections 1-5 and the Quick Wins Checklist.
+- Calling the Anthropic API directly? → Also read `references/api-optimization-guide.md`. That's where the biggest savings live (prompt caching = 90% off, Batch API = 50% off, stackable).
 
 ## Installation
 
@@ -95,6 +103,38 @@ Default to Sonnet. Escalate to Opus only for genuinely complex problems. Use Hai
 
 **Subagents for verbose tasks:** Use the Task tool for operations that generate large output (test runs, builds, searches). The verbose output stays in the subagent's context — only the summary returns to your main conversation.
 
+### 6. Prompt Architecture (Claude Code and API)
+
+How you write prompts has a direct, measurable impact on tokens — in both directions.
+
+- **Be direct, put the ask first, say it once.** Repetition doesn't increase compliance, it just bills.
+- **Constrain output explicitly.** "Under 50 words", "max 3 bullets", "JSON with keys X, Y, Z, no explanation." Open-ended prompts produce open-ended (expensive) responses.
+- **Use XML tags** (`<instructions>`, `<context>`, `<output_format>`) to reduce ambiguity.
+- **Include only relevant context.** Don't paste 500 lines when one function is enough.
+
+### 7. API-Only Optimizations
+
+If you're calling the Anthropic API directly (SDK, custom agents, production apps), these are **the highest-impact levers** — most are absent when using Claude Code because the harness handles them for you.
+
+| Technique | Savings | Notes |
+|-----------|---------|-------|
+| **Prompt caching** | 90% on cached reads | Cache writes cost 1.25x, reads 0.1x. Pays for itself on 2nd call. |
+| **Batch API** | 50% on all tokens | <24h latency. Stacks with caching → up to 95% total. |
+| **`effort: low`** | Large reduction | Skip deep reasoning for classification/extraction. |
+| **`budget_tokens` cap** | Proportional | 8K-16K is plenty for most tasks. Don't use 100K to format a date. |
+| **Prefill assistant turn** | Removes preamble | `{"role": "assistant", "content": "{"}` skips "Sure! Here's…". |
+| **Token-efficient tools** | ~14% output avg | Default in Claude 4. Add `token-efficient-tools-2025-02-19` header for 3.7. |
+| **Dynamic tool loading** | Scales with tool count | Every tool schema ships in every request. Only include what the task needs. |
+| **Token counting endpoint** | Debugging | Get exact cost before running inference. |
+
+**Critical cache gotchas:**
+- **Images break the cache.** Adding or removing an image anywhere in the prompt invalidates it. If your flow sometimes sends images, treat it as a separate request pattern.
+- **Anything before the cache breakpoint must be stable.** Timestamps, session IDs, or the user message placed before the breakpoint defeat caching entirely — you pay the 1.25x write surcharge every time with zero reads.
+- **Concurrency pitfall.** Cache entries become available only after the first response starts streaming. Fire-and-forget 10 parallel requests → 9 cache misses. Fire one, wait for stream to start, then fan out.
+- **Mind the minimum token threshold** per breakpoint (2,048 for Sonnet 4.6; 4,096 for Opus 4.6 and Haiku 4.5). Below it, nothing caches and no error is raised. Verify `cache_creation_input_tokens` in the response.
+
+> Full details, pricing math, TTL tradeoffs, and a setup checklist: `references/api-optimization-guide.md`
+
 ## Quick Wins Checklist
 
 Apply these in order of impact:
@@ -107,6 +147,8 @@ Apply these in order of impact:
 6. **Use subagents for verbose tasks** → test output, build logs, and search results stay in subagent context instead of polluting your main conversation
 7. **Use the right model** → default to Sonnet for daily work, Haiku for simple tasks (18x cheaper than Opus), Opus only for genuinely complex architecture decisions
 8. **Limit active MCPs** to ≤10 → each unused MCP still costs tokens every turn because its tool descriptions are sent in every request
+9. **Track cost with `/cost`** → use it to see spend per session; configure the statusline to display it continuously
+10. **API users: enable prompt caching** → `cache_control` on system prompt and tools = 90% off on repeated input; see `references/api-optimization-guide.md`
 
 ## Expected Savings
 
@@ -174,6 +216,9 @@ When activated, follow this process:
 | Don't know how many tokens I'm using | Token consumption not visible by default | Use `/context` to see the full breakdown |
 | `/compact` doesn't reduce enough | Compresses but keeps essentials | Use `/clear` if prior context is irrelevant |
 | Cross-cutting tasks slower after splitting | Multiple reads needed (1-5% more tokens) | Expected and marginal — focused tasks (80% of work) still save 18%+ |
+| API: cache seems not to work, writes every call | Content before breakpoint changes every request (timestamp, session ID, user msg) OR below minimum tokens OR image added/removed | Check `cache_creation_input_tokens` — move volatile content after the breakpoint and meet per-model minimums |
+| API: parallel requests all miss cache | Cache entry only exists after first response streams | Fire first request, wait for stream to start, then fan out the rest |
+| API: thinking tokens making requests expensive | Default `budget_tokens` can be tens of thousands | Cap `budget_tokens` at 8K-16K, or set `effort: low`, or disable thinking for formatting/lookup tasks |
 
 ## Reference Materials
 
@@ -181,3 +226,4 @@ When activated, follow this process:
 - `references/context-management-guide.md` — Lazy loading, subagents, MCP management, and model selection strategies
 - `references/metrics-report.md` — Complete experiment data and methodology with raw numbers
 - `references/claude-md-template.md` — Ready-to-use optimized CLAUDE.md template
+- `references/api-optimization-guide.md` — Prompt caching, Batch API, effort/thinking budget, prefill, token-efficient tools, and monitoring for direct API users
