@@ -15,7 +15,7 @@ description: >
 compatibility: Claude Code
 license: MIT
 metadata:
-  author: alexismunoz1
+  author: amunozdev
   version: 1.4.0
 ---
 
@@ -30,7 +30,7 @@ A comprehensive toolkit to reduce token consumption and lower AI costs — for b
 ## Installation
 
 ```bash
-npx skills add alexismunoz1/token-optimizer
+npx skills add amunozdev/token-optimizer
 ```
 
 Or manually:
